@@ -54,7 +54,7 @@ background.HASH_BITS_ = 37;
  * Where password use reports are sent.
  * @private {string}
  */
-// background.report_url_='https://api.mercadolibre.com/ziIrIN5tjSYPtGzKFTnLoMheGrXqlZqP/pwalert-prod/v1/';
+//background.report_url_='https://api.mercadolibre.com/ziIrIN5tjSYPtGzKFTnLoMheGrXqlZqP/pwalert-prod/v1/';
 
 background.report_url_='https://api.mercadolibre.com/KWKVOfCklIjXCUABLBFyYgAP2yA56yBU/pwalert-test/v1/';
 /**
@@ -524,6 +524,7 @@ background.completePageInitialization_ = function() {
 
   // Get the username from a signed in Chrome profile, which might be used
   // for reporting phishing sites (if the password store isn't initialized).
+  // ToDo
   chrome.identity.getProfileUserInfo(function(userInfo) {
     if (userInfo) {
       background.signed_in_email_ = userInfo.email;
@@ -1130,7 +1131,7 @@ background.sendReportPage_ = function(request) {
 
 
 /**
- * Sends an alert to the server if in Enterprise mode.
+ * Sends an alert to the server 
  * @param {!background.Request_} request Request object from
  *     content_script. Contains url and referer.
  * @param {string} email The email to report.

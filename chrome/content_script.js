@@ -72,7 +72,8 @@ passwordalert.corp_email_domain_;
  * @private {string}
  * @const
  */
-passwordalert.GAIA_URL_ = 'https://accounts.google.com/';
+// passwordalert.GAIA_URL_ = 'https://accounts.google.com/';
+passwordalert.GAIA_URL_ = 'https://auth.mercadolibre.adminml.com/login';
 
 
 // TODO(adhintz) See if /SecondFactor and /b/0/VerifiedPhoneInterstitial URLs
@@ -82,22 +83,28 @@ passwordalert.GAIA_URL_ = 'https://accounts.google.com/';
  * @private {!Array.<string>}
  * @const
  */
+// ToDo - Add the new URL for the GAIA_CORRECT_ array
 passwordalert.GAIA_CORRECT_ = [
-  'https://accounts.google.com/SecondFactor',
-  'https://accounts.google.com/b/0/VerifiedPhoneInterstitial',
-  'https://accounts.google.com/signin/newfeatures',
-  'https://accounts.google.com/signin/selectchallenge',
-  'https://accounts.google.com/signin/challenge',
-  'https://accounts.google.com/signin/privacyreminder',
-  'https://accounts.google.com/signin/v2/challenge/ipp',
-  'https://accounts.google.com/signin/v2/challenge/sk/webauthn',
-  'https://accounts.google.com/signin/v2/challenge/pwd',
-  'https://accounts.google.com/signin/v2/challenge/totp',
-  'https://accounts.google.com/v3/signin/confirmidentifier',
-  'https://accounts.google.com/v3/signin/identifier',
-  'https://accounts.google.com/v3/signin',
-  'https://accounts.google.com/v3/signin/challenge',
-  'https://accounts.google.com/RotateCookiesPage' // Consumer mode
+  // 'https://accounts.google.com/SecondFactor',
+  // 'https://accounts.google.com/b/0/VerifiedPhoneInterstitial',
+  // 'https://accounts.google.com/signin/newfeatures',
+  // 'https://accounts.google.com/signin/selectchallenge',
+  // 'https://accounts.google.com/signin/challenge',
+  // 'https://accounts.google.com/signin/privacyreminder',
+  // 'https://accounts.google.com/signin/v2/challenge/ipp',
+  // 'https://accounts.google.com/signin/v2/challenge/sk/webauthn',
+  // 'https://accounts.google.com/signin/v2/challenge/pwd',
+  // 'https://accounts.google.com/signin/v2/challenge/totp',
+  // 'https://accounts.google.com/v3/signin/confirmidentifier',
+  // 'https://accounts.google.com/v3/signin/identifier',
+  // 'https://accounts.google.com/v3/signin',
+  // 'https://accounts.google.com/v3/signin/challenge',
+  // 'https://accounts.google.com/RotateCookiesPage' // Consumer mode
+  // AuthO
+  'https://auth.mercadolibre.adminml.com/mf',
+  // Meli-help
+  'https://melihelp.adminml.com/categories/34'
+   // <h2 class="andes-feedback-screen__header-title">¡Se ha realizado con éxito el cambio de contraseña!</h2>
 ];
 
 
@@ -108,8 +115,10 @@ passwordalert.GAIA_CORRECT_ = [
  * @const
  */
 passwordalert.GAIA_INCORRECT_ = [
+  // TODO - Add the new URL for the GAIA_INCORRECT_ array
   'https://accounts.google.com/signin/challenge/sl/password',
   'https://accounts.google.com/signin/challenge/pwd/1'
+ 
 ];
 
 
@@ -118,6 +127,7 @@ passwordalert.GAIA_INCORRECT_ = [
  * @private {string}
  * @const
  */
+// ToDo 
 passwordalert.CHANGE_PASSWORD_URL_ =
     'https://myaccount.google.com/signinoptions/password';
 
@@ -164,6 +174,7 @@ passwordalert.corp_html_ = [
  * values are for consumers.
  * @private {!Array.<string>}
  */
+// TODO looks like auth0?
 passwordalert.corp_html_tight_ = [
   // From https://accounts.google.com/ServiceLogin
   ('<input id="Passwd" name="Passwd" placeholder="Password" class="" ' +
@@ -171,8 +182,20 @@ passwordalert.corp_html_tight_ = [
   ('<input id="Passwd" name="Passwd" type="password" placeholder="Password" ' +
    'class="">'),
   '<input id="signIn" name="signIn" class="rc-button rc-button-submit" ',
-  // From https://accounts.google.com/b/0/EditPasswd?hl=en
-  '<div class="editpasswdpage main content clearfix">'
+  // From https://auth.mercadolibre.adminml.com/login
+  'input type="password" id="1-password" name="password" class="auth0-lock-input"' + 
+  'autocomplete="off" autocapitalize="off" value="" aria-label="Password"' +
+  'aria-invalid="false" placeholder="your password"',
+  '<input type="text" name="username" class="auth0-lock-input" placeholder="your username"' +
+  'autocomplete="off" autocapitalize="off" spellcheck="off" autocorrect="off"' +
+  'aria-label="User name" aria-invalid="false" value="">',
+  // From https://melihelp.adminml.com/categories/34
+  '<input autocomplete="off" name="user-password" type="password" autofocus=""' +
+  'rows="1" id="user-password" class="andes-form-control__field" maxlength="120"' +
+  'placeholder="Ingresa la nueva contraseña" value="">',
+  '<input autocomplete="off" name="user-password-confirm" type="password"' +
+  'rows="1" id="user-password-confirm" class="andes-form-control__field" maxlength="120"' +
+  'placeholder="Ingresa nuevamente contraseña" value="">',
 ];
 
 
@@ -378,6 +401,7 @@ passwordalert.handleManagedPolicyChanges_ = function(
 };
 
 
+// TODO the magic happens here, change login url and form selectors
 /**
  * Complete page initialization.  This is executed after managed policy values
  * have been set.
@@ -534,6 +558,7 @@ passwordalert.completePageInitializationIfReady_ = function() {
 //   }
 //   return ret;
 // };
+// TODO AUTH0 MFA
 passwordalert.is_gaia_correct_ = function(url) {
   let ret = false;
   if (!!document.getElementById('totpPin')){
@@ -702,6 +727,7 @@ passwordalert.saveGaiaPassword_ = function(evt) {
 };
 
 
+// TODO change form elements, since we have a new field we have to change it in the request too
 /**
  * Called when the new GAIA page is unloaded. Sends possible
  * password to background.js.
@@ -709,15 +735,18 @@ passwordalert.saveGaiaPassword_ = function(evt) {
  * @private
  */
 passwordalert.saveGaia2Password_ = function(evt) {
-  const emailInput = document.getElementById('hiddenEmail');
-  const email =
-      emailInput ? googString.trim(emailInput.value.toLowerCase()) : '';
-  const passwordInputs = document.getElementsByName('Passwd');
-  if (!passwordInputs || passwordInputs.length != 1) {
+
+  const usernameInput = document.getElementsByName('username');
+  if (!usernameInput || usernameInput.length != 1) {
+    console.log('Username input not found');
     return;
   }
-  const password = passwordInputs[0].value;
+  const email = usernameInput[0].value; // change then the field name here and in the request and fury aoo
+  
+  const password = document.getElementById('1-password');
+  
   if (!email || !password) {
+    console.log('Email or password not found -saveGaia2Password_');
     return;
   }
   if ((passwordalert.enterpriseMode_ &&
@@ -729,6 +758,29 @@ passwordalert.saveGaia2Password_ = function(evt) {
       {action: 'setPossiblePassword', email: email, password: password});
   
 };
+// passwordalert.saveGaia2Password_ = function(evt) {
+//   const emailInput = document.getElementById('hiddenEmail');
+//   const email =
+//       emailInput ? googString.trim(emailInput.value.toLowerCase()) : '';
+//   const passwordInputs = document.getElementsByName('Passwd');
+//   if (!passwordInputs || passwordInputs.length != 1) {
+//     return;
+//   }
+//   const password = passwordInputs[0].value;
+//   if (!email || !password) {
+//     return;
+//   }
+//   if ((passwordalert.enterpriseMode_ &&
+//     //   !passwordalert.isEmailInDomain_(email)) ||
+//       googString.isEmptyString(googString.makeSafe(password))) {
+//     return;  // Ignore generic @gmail.com logins or for other domains.
+//   }
+//   chrome.runtime.sendMessage(
+//       {action: 'setPossiblePassword', email: email, password: password});
+  
+// };
+
+
 
 
 /**
