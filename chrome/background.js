@@ -575,12 +575,15 @@ background.handleRequest_ = function(request, sender, sendResponse) {
       background.displayPhishingWarningIfNeeded_(sender.tab.id, request);
       break;
     case 'deletePossiblePassword':
+      console.log('Possible password deleted')
       delete background.possiblePassword_[sender.tab.id];
       break;
     case 'setPossiblePassword':
+      console.log('Setting possible password')
       background.setPossiblePassword_(sender.tab.id, request);
       break;
     case 'savePossiblePassword':
+      console.log('Saving possible password')
       background.savePossiblePassword_(sender.tab.id);
       break;
     case 'getEmail':
@@ -776,6 +779,7 @@ background.handleKeypress_ = async function(tabId, request) {
  */
 background.setPossiblePassword_ = function(tabId, request) {
   if (!request.email || !request.password) {
+    console.log('request password or email not found')
     return;
   }
   if (request.password.length < background.MINIMUM_PASSWORD_) {
@@ -801,6 +805,7 @@ background.setPossiblePassword_ = function(tabId, request) {
  * @return {*} The item.
  * @private
  */
+console.log('Getting chrome local storage item')
 background.getLocalStorageItem_ = function(index) {
   return new Promise((resolve, reject) => {
     chrome.storage.local.get(null, result => {
@@ -824,10 +829,11 @@ background.getLocalStorageItem_ = function(index) {
  * @private
  */
 background.savePossiblePassword_ = function(tabId) {
-  
+ 
   const possiblePassword_ = background.possiblePassword_[tabId];
-  
+
   if (!possiblePassword_) {
+    console.log('Not possible password, returning')
     return;
   }
   if ((Math.floor(Date.now() / 1000) - possiblePassword_['time']) > 60) {
@@ -837,7 +843,12 @@ background.savePossiblePassword_ = function(tabId) {
   const password = possiblePassword_['password'];
   const length = possiblePassword_['length'];
 
-  
+  console.log('Possible password item: ')
+  console.log('Email:', email);
+  console.log('Password:', password);
+  console.log('Length:', length);
+
+
   // Delete old email entries.
   chrome.storage.local.get(null).then(result => { 
     const keys = Object.keys(result);
@@ -890,15 +901,21 @@ background.savePossiblePassword_ = function(tabId) {
       }
     }
  
+    console.log('Setting chrome local storage item')
     chrome.storage.local.set({ [password]: item }, function() {
       if (chrome.runtime.lastError) {
+        console.log('Error saving password: ', chrome.runtime.lastError)
         console.error('Error saving password for: ' + email, chrome.runtime.lastError);
       } else {
         
-        console.log('Saving possible password')
         delete background.possiblePassword_[tabId];
         
         background.refreshPasswordLengths_();
+
+        console.log('Local storage item setted: ')
+        chrome.storage.local.get(null, function(items) {
+          console.log(items);
+        });
       }
     });
   });
@@ -912,6 +929,7 @@ background.savePossiblePassword_ = function(tabId) {
  */
 background.refreshPasswordLengths_ = function() {
   background.passwordLengths_ = [];
+  
   chrome.storage.local.get(null).then(result => {
     const keys = Object.keys(result);
     const length = keys.length;

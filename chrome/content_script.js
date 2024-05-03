@@ -102,6 +102,7 @@ passwordalert.GAIA_CORRECT_ = [
   // 'https://accounts.google.com/RotateCookiesPage' // Consumer mode
   // AuthO
   'https://auth.mercadolibre.adminml.com/mf',
+  'https://auth.mercadolibre.adminml.com',
   // Meli-help
   'https://melihelp.adminml.com/categories/34'
    // <h2 class="andes-feedback-screen__header-title">¡Se ha realizado con éxito el cambio de contraseña!</h2>
@@ -454,8 +455,8 @@ passwordalert.completePageInitializationIfReady_ = function() {
     }, true);
   } else if (googString.startsWith(passwordalert.url_, passwordalert.GAIA_URL_)) {
       if (passwordalert.is_gaia_correct_(passwordalert.url_)) {
-        console.log('Saving Possible Password')
         passwordalert.saveGaia2Password_(null)
+        console.log('action called from line 460: savePossiblePassword')
         chrome.runtime.sendMessage({action: 'savePossiblePassword'});
       } else {
         // Delete any previously considered password in case this is a re-prompt
@@ -468,9 +469,12 @@ passwordalert.completePageInitializationIfReady_ = function() {
           loginForm.addEventListener(
               'submit', passwordalert.saveGaiaPassword_, true);
         } else if (
+            
             document.getElementById('hiddenEmail') &&
             // TODO verify form name, for consumer mode replace Passwd for passwords
             document.getElementsByName('Passwd')) {
+
+              console.log('enetering to hiddenEmail validation')
           // TODO(adhintz) Avoid adding event listeners if they already exist.
           document.getElementById('passwordNext')
               .addEventListener('click', function() {
@@ -532,7 +536,7 @@ passwordalert.completePageInitializationIfReady_ = function() {
   chrome.runtime.sendMessage({action: 'statusRequest'}, function(response) {
     passwordalert.stop_();
     passwordalert.start_(response);
-    // console.log('PA is running',passwordalert.isRunning_)
+    console.log('PA is running',passwordalert.isRunning_)
   });
 };
 
@@ -542,31 +546,38 @@ passwordalert.completePageInitializationIfReady_ = function() {
  * @return {boolean} True if the URL indicates the password is correct.
  * @private
  */
-// passwordalert.is_gaia_correct_ = function(url) {
-//   let ret = false;
-//   passwordalert.GAIA_CORRECT_.forEach(function(prefix) {
-//     if (googString.startsWith(url, prefix)) {
-//       ret = true;
-//     }
-//   });
-//   if (ret) {  // Filter out exceptions which indicate password is not correct.
-//     passwordalert.GAIA_INCORRECT_.forEach(function(prefix) {
-//       if (googString.startsWith(url, prefix)) {
-//         ret = false;
-//       }
-//     });
-//   }
-//   return ret;
-// };
-// TODO AUTH0 MFA
 passwordalert.is_gaia_correct_ = function(url) {
   let ret = false;
-  if (!!document.getElementById('totpPin')){
-    console.log('MFA element id found')
-    ret=true
-  }
+  passwordalert.GAIA_CORRECT_.forEach(function(prefix) {
+    if (googString.startsWith(url, prefix)) {
+      ret = true;
+    }
+  });
+  // if (ret) {  // Filter out exceptions which indicate password is not correct.
+  //   passwordalert.GAIA_INCORRECT_.forEach(function(prefix) {
+  //     if (googString.startsWith(url, prefix)) {
+  //       ret = false;
+  //     }
+  //   });
+  // }
+  console.log('It is gaia correct: ', ret)
   return ret;
 };
+// TODO AUTH0 MFA
+// passwordalert.is_gaia_correct_ = function(url) {
+//   let ret = false;
+//   // if (!!document.getElementById('totpPin')){
+//   //   console.log('MFA element id found')
+//   //   ret=true
+//   // }
+//   let element = document.querySelector('h2.andes-feedback-screen__header-title');
+//   if (element && element.textContent === '¡Se ha realizado con éxito el cambio de contraseña!') {
+//     console.log('auth sucess element found, the login was succesful')
+//     ret = true;
+//   }
+
+//   return ret;
+// };
 
 /**
  * Sets variables to enable watching for passwords being typed. Called when
@@ -703,28 +714,28 @@ passwordalert.saveSsoPassword_ = function(evt) {
   }
 };
 
-// TODO(adhintz) See if the old GAIA login page is used any where.
-// If not, delete this function.
-/**
- * Called when the GAIA page is submitted. Sends possible
- * password to background.js.
- * @param {!Event} evt Form submit event that triggered this. Not used.
- * @private
- */
-passwordalert.saveGaiaPassword_ = function(evt) {
-  const loginForm = document.getElementById('gaia_loginform');
-  const email = loginForm.Email ?
-      googString.trim(loginForm.Email.value.toLowerCase()) :
-      '';
-  const password = loginForm.Passwd ? loginForm.Passwd.value : '';
-  if ((passwordalert.enterpriseMode_ &&
-       !passwordalert.isEmailInDomain_(email)) ||
-      googString.isEmptyString(googString.makeSafe(password))) {
-    return;  // Ignore generic @gmail.com logins or for other domains.
-  }
-  chrome.runtime.sendMessage(
-      {action: 'setPossiblePassword', email: email, password: password});  
-};
+// // TODO(adhintz) See if the old GAIA login page is used any where.
+// // If not, delete this function.
+// /**
+//  * Called when the GAIA page is submitted. Sends possible
+//  * password to background.js.
+//  * @param {!Event} evt Form submit event that triggered this. Not used.
+//  * @private
+//  */
+// passwordalert.saveGaiaPassword_ = function(evt) {
+//   const loginForm = document.getElementById('gaia_loginform');
+//   const email = loginForm.Email ?
+//       googString.trim(loginForm.Email.value.toLowerCase()) :
+//       '';
+//   const password = loginForm.Passwd ? loginForm.Passwd.value : '';
+//   if ((passwordalert.enterpriseMode_ &&
+// //       !passwordalert.isEmailInDomain_(email)) ||
+//       googString.isEmptyString(googString.makeSafe(password))) {
+//     return;  // Ignore generic @gmail.com logins or for other domains.
+//   }
+//   chrome.runtime.sendMessage(
+//       {action: 'setPossiblePassword', email: email, password: password});  
+// };
 
 
 // TODO change form elements, since we have a new field we have to change it in the request too
@@ -734,28 +745,39 @@ passwordalert.saveGaiaPassword_ = function(evt) {
  * @param {?Event} evt BeforeUnloadEvent that triggered this. Not used.
  * @private
  */
-passwordalert.saveGaia2Password_ = function(evt) {
+  passwordalert.saveGaia2Password_ = function(evt) {
 
-  const usernameInput = document.getElementsByName('username');
-  if (!usernameInput || usernameInput.length != 1) {
-    console.log('Username input not found');
-    return;
-  }
-  const email = usernameInput[0].value; // change then the field name here and in the request and fury aoo
+  console.log('Running saveGaia2Password_')
+
+  // const usernameInput = document.getElementsByName('username');
+  // if (!usernameInput || usernameInput.length != 1) {
+  //   console.log('Username input not found');
+  //   return;
+  // }
+  // const email = usernameInput[0].value; // change then the field name here and in the request and fury app
+  // console.log('Email:', email);
+
+  const username = document.querySelector('input[name="username"]');
+  console.log('Username:', username.value);
+
+  // using the class
+  // const username = document.querySelector('.auth0-lock-input');
+  // console.log('Username:', username.value);
   
-  const password = document.getElementById('1-password');
+  const password = document.getElementById('1-password').value;
+  console.log('Password:', password);
   
-  if (!email || !password) {
-    console.log('Email or password not found -saveGaia2Password_');
-    return;
-  }
+  // if (!username || !password) {
+  //   console.log('Email or password not found -saveGaia2Password_');
+  //   return;
+  // }
   if ((passwordalert.enterpriseMode_ &&
        !passwordalert.isEmailInDomain_(email)) ||
       googString.isEmptyString(googString.makeSafe(password))) {
     return;  // Ignore generic @gmail.com logins or for other domains.
   }
   chrome.runtime.sendMessage(
-      {action: 'setPossiblePassword', email: email, password: password});
+      {action: 'setPossiblePassword', email: username, password: password});
   
 };
 // passwordalert.saveGaia2Password_ = function(evt) {
