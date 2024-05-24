@@ -55,8 +55,9 @@ background.HASH_BITS_ = 37;
  * @private {string}
  */
 //background.report_url_='https://api.mercadolibre.com/ziIrIN5tjSYPtGzKFTnLoMheGrXqlZqP/pwalert-prod/v1/';
-
 background.report_url_='https://api.mercadolibre.com/KWKVOfCklIjXCUABLBFyYgAP2yA56yBU/pwalert-test/v1/';
+
+
 /**
  * Whether the user should be prompted to initialize their password.
  * @private {boolean}
@@ -524,7 +525,6 @@ background.completePageInitialization_ = function() {
 
   // Get the username from a signed in Chrome profile, which might be used
   // for reporting phishing sites (if the password store isn't initialized).
-  // ToDo
   chrome.identity.getProfileUserInfo(function(userInfo) {
     if (userInfo) {
       background.signed_in_email_ = userInfo.email;
@@ -575,15 +575,12 @@ background.handleRequest_ = function(request, sender, sendResponse) {
       background.displayPhishingWarningIfNeeded_(sender.tab.id, request);
       break;
     case 'deletePossiblePassword':
-      console.log('Possible password deleted')
       delete background.possiblePassword_[sender.tab.id];
       break;
     case 'setPossiblePassword':
-      console.log('Setting possible password')
       background.setPossiblePassword_(sender.tab.id, request);
       break;
     case 'savePossiblePassword':
-      console.log('Saving possible password')
       background.savePossiblePassword_(sender.tab.id);
       break;
     case 'getEmail':
@@ -640,7 +637,7 @@ background.checkOtp_ = async function(tabId, request, state) {
         const item = await chrome.storage.local.get(state.hash);
         console.log('OTP TYPED! ' + request.url);
         await background.sendReportPassword_(
-          request, item['email'], item['date'], true);
+          request, item['username'], item['date'], true);
         background.clearOtpMode_(state);
       } catch (error) {
         console.log('Error sending report'+error)
@@ -774,12 +771,12 @@ background.handleKeypress_ = async function(tabId, request) {
  * We do not yet know if the password is correct.
  * @param {number} tabId The tab that was used to log in.
  * @param {!background.Request_} request Request object
- *     containing email address and password.
+ *     containing username address and password.
  * @private
  */
 background.setPossiblePassword_ = function(tabId, request) {
-  if (!request.email || !request.password) {
-    console.log('request password or email not found')
+  if (!request.username || !request.password) {
+    console.log('Request password or username not found')
     return;
   }
   if (request.password.length < background.MINIMUM_PASSWORD_) {
@@ -790,12 +787,11 @@ background.setPossiblePassword_ = function(tabId, request) {
   }
 
   background.possiblePassword_[tabId] = {
-    'email': request.email,
+    'username': request.username,
     'password': background.hashPassword_(request.password),
     'length': request.password.length,
     'time': Math.floor(Date.now() / 1000)
   };
-  console.log('Setting possible password');
 };
 
 
@@ -805,7 +801,6 @@ background.setPossiblePassword_ = function(tabId, request) {
  * @return {*} The item.
  * @private
  */
-console.log('Getting chrome local storage item')
 background.getLocalStorageItem_ = function(index) {
   return new Promise((resolve, reject) => {
     chrome.storage.local.get(null, result => {
@@ -833,30 +828,24 @@ background.savePossiblePassword_ = function(tabId) {
   const possiblePassword_ = background.possiblePassword_[tabId];
 
   if (!possiblePassword_) {
-    console.log('Not possible password, returning')
     return;
   }
   if ((Math.floor(Date.now() / 1000) - possiblePassword_['time']) > 60) {
     return;  // If login took more than 60 seconds, ignore it.
   }
-  const email = possiblePassword_['email'];
+  const username = possiblePassword_['username'];
   const password = possiblePassword_['password'];
   const length = possiblePassword_['length'];
-
-  console.log('Possible password item: ')
-  console.log('Email:', email);
-  console.log('Password:', password);
-  console.log('Length:', length);
-
 
   // Delete old email entries.
   chrome.storage.local.get(null).then(result => { 
     const keys = Object.keys(result);
     for (let i = 0; i < keys.length; i++) {
       const item = background.getLocalStorageItem_(i);
-      if (item && item['email'] == email) {
-        delete item['email'];
-        delete item['date']; 
+      if (item && item['username'] == username) {
+        delete item['username'];
+        delete item['date'];
+        console.log('Saving possible password')
         chrome.storage.local.set({ [keys[i]] : JSON.stringify(item) });
       }
     }
@@ -865,7 +854,7 @@ background.savePossiblePassword_ = function(tabId) {
     const keysToDelete = [];
     for (let i = 0; i < keys.length; i++) {
       const item = background.getLocalStorageItem_(i);
-      if (item && !('email' in item)) {
+      if (item && !('username' in item)) {
         // Delete the item later.
         // We avoid modifying localStorage while iterating over it.
         keysToDelete.push(keys[i]);
@@ -880,7 +869,7 @@ background.savePossiblePassword_ = function(tabId) {
       item = {'length': length};
     }
 
-    item['email'] = email;
+    item['username'] = username;
     item['date'] = new Date();  
     
     if (background.isNewInstall_) {
@@ -901,20 +890,16 @@ background.savePossiblePassword_ = function(tabId) {
       }
     }
  
-    console.log('Setting chrome local storage item')
     chrome.storage.local.set({ [password]: item }, function() {
       if (chrome.runtime.lastError) {
-        console.log('Error saving password: ', chrome.runtime.lastError)
-        console.error('Error saving password for: ' + email, chrome.runtime.lastError);
+        console.error('Error saving password for: ' + username, chrome.runtime.lastError);
       } else {
         
         delete background.possiblePassword_[tabId];
         
         background.refreshPasswordLengths_();
 
-        console.log('Local storage item setted: ')
         chrome.storage.local.get(null, function(items) {
-          console.log(items);
         });
       }
     });
@@ -1000,13 +985,14 @@ background.checkPassword_ = function(tabId, request, state) {
 
   const hash = background.hashPassword_(request.password);
   chrome.storage.local.get(hash).then(item => {
+  
     if (item) {
       let length;
-
+     
       for (const key in item) {
         if (item.hasOwnProperty(key)) {
           length = item[key].length;
-          email=item[key].email
+          username=item[key].username
           break; // Assuming you only need the first occurrence
         }
       }
@@ -1027,9 +1013,8 @@ background.checkPassword_ = function(tabId, request, state) {
           state['otpTime'] = new Date()
           // background.displayPasswordWarningIfNeeded_(
           //     request.url, item['email'], tabId);
-      
           background.sendReportPassword_(
-          request, item[hash]['email'], item[hash]['date'], false); 
+          request, item[hash]['username'], item[hash]['date'], false); 
           
             return true
         } else {  // Enterprise mode.
@@ -1117,7 +1102,7 @@ background.displayPhishingWarningIfNeeded_ = function(tabId, request) {
  * Sends a password typed alert to the server.
  * @param {!background.Request_} request Request object from
  *     content_script. Contains url and referer.
- * @param {string} email The email to report.
+ * @param {string} username The username to report.
  * @param {string} date The date when the correct password hash was saved.
  *                      It is a string from JavaScript's Date().
  * @param {boolean} otp True if this is for an OTP alert.
@@ -1126,9 +1111,9 @@ background.displayPhishingWarningIfNeeded_ = function(tabId, request) {
 // background.sendReportPassword_ = function(request, email, date, otp) {
 //   background.sendReport_(request, email, date, otp, 'password/');
 // };
-background.sendReportPassword_ = function(request, email, date, otp) {
+background.sendReportPassword_ = function(request, username, date, otp) {
   return new Promise((resolve, reject) => {
-    background.sendReport_(request, email, date, otp, 'password/', resolve, reject);
+    background.sendReport_(request, username, date, otp, 'password/', resolve, reject);
   });
 };
 
@@ -1152,19 +1137,19 @@ background.sendReportPage_ = function(request) {
  * Sends an alert to the server 
  * @param {!background.Request_} request Request object from
  *     content_script. Contains url and referer.
- * @param {string} email The email to report.
+ * @param {string} username The username to report.
  * @param {string} date The date when the correct password hash was saved.
  *                      It is a string from JavaScript's Date().
  * @param {boolean} otp True if this is for an OTP alert.
  * @param {string} path Server path for report, such as "page/" or "password/".
  * @private
  */
-background.sendReport_ = async function(request, email, date, otp, path) {
+background.sendReport_ = async function(request,username,date, otp, path) {
   console.log('Request action: '+JSON.stringify(request['action']))
   const domain = background.corp_email_domain_.split(',')[0].trim();
 
   let data =
-    ('email=' + encodeURIComponent(email) +
+    ('username=' + encodeURIComponent(username) +
       '&domain=' + encodeURIComponent(domain) +
       '&referer=' + encodeURIComponent(request.referer || '') +
       '&url=' + encodeURIComponent(request.url || '') +
@@ -1193,7 +1178,7 @@ background.sendReport_ = async function(request, email, date, otp, path) {
   }
 
   console.log('Sending alert to the server');
-  // console.log(background.report_url_+path)
+  console.log('Data: '+data)
   
   const response = await fetch(background.report_url_ + path, {
     method: 'POST',
@@ -1203,6 +1188,12 @@ background.sendReport_ = async function(request, email, date, otp, path) {
     },
     body: data,
   });
+
+  if (response.ok) {
+    console.log('Request was successful');
+} else {
+    console.log('Request failed with status: ', response.status);
+}
 
 };
 

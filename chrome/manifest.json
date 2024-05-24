@@ -33,10 +33,6 @@
     "content_security_policy": {
       "extension_pages": "script-src 'self'; object-src 'self'",
       "sandbox": "sandbox allow-scripts; default-src 'none'; script-src 'self'"
-    },
-    "oauth2": {
-      "client_id": "897749729682-2j2fjtnfde4kgi40fvjrp7ude48ooh4n.apps.googleusercontent.com",
-      "scopes": ["email"]
     }
   }
   

@@ -128,7 +128,6 @@ passwordalert.GAIA_INCORRECT_ = [
  * @private {string}
  * @const
  */
-// ToDo 
 passwordalert.CHANGE_PASSWORD_URL_ =
     'https://myaccount.google.com/signinoptions/password';
 
@@ -175,7 +174,7 @@ passwordalert.corp_html_ = [
  * values are for consumers.
  * @private {!Array.<string>}
  */
-// TODO looks like auth0?
+// TODO - looks like auth0?
 passwordalert.corp_html_tight_ = [
   // From https://accounts.google.com/ServiceLogin
   ('<input id="Passwd" name="Passwd" placeholder="Password" class="" ' +
@@ -402,7 +401,6 @@ passwordalert.handleManagedPolicyChanges_ = function(
 };
 
 
-// TODO the magic happens here, change login url and form selectors
 /**
  * Complete page initialization.  This is executed after managed policy values
  * have been set.
@@ -456,7 +454,6 @@ passwordalert.completePageInitializationIfReady_ = function() {
   } else if (googString.startsWith(passwordalert.url_, passwordalert.GAIA_URL_)) {
       if (passwordalert.is_gaia_correct_(passwordalert.url_)) {
         passwordalert.saveGaia2Password_(null)
-        console.log('action called from line 460: savePossiblePassword')
         chrome.runtime.sendMessage({action: 'savePossiblePassword'});
       } else {
         // Delete any previously considered password in case this is a re-prompt
@@ -473,8 +470,6 @@ passwordalert.completePageInitializationIfReady_ = function() {
             document.getElementById('hiddenEmail') &&
             // TODO verify form name, for consumer mode replace Passwd for passwords
             document.getElementsByName('Passwd')) {
-
-              console.log('enetering to hiddenEmail validation')
           // TODO(adhintz) Avoid adding event listeners if they already exist.
           document.getElementById('passwordNext')
               .addEventListener('click', function() {
@@ -563,13 +558,10 @@ passwordalert.is_gaia_correct_ = function(url) {
   console.log('It is gaia correct: ', ret)
   return ret;
 };
+
 // TODO AUTH0 MFA
 // passwordalert.is_gaia_correct_ = function(url) {
 //   let ret = false;
-//   // if (!!document.getElementById('totpPin')){
-//   //   console.log('MFA element id found')
-//   //   ret=true
-//   // }
 //   let element = document.querySelector('h2.andes-feedback-screen__header-title');
 //   if (element && element.textContent === '¡Se ha realizado con éxito el cambio de contraseña!') {
 //     console.log('auth sucess element found, the login was succesful')
@@ -705,40 +697,13 @@ passwordalert.saveSsoPassword_ = function(evt) {
     let username =
         document.querySelector(passwordalert.sso_username_selector_).value;
     const password =
-        document.querySelector(passwordalert.sso_password_selector_).value;
-    if (username.indexOf('@') == -1) {
-      username += '@' + passwordalert.corp_email_domain_.split(',')[0].trim();
-    }
+        document.querySelector(passwordalert.sso_password_selector_).value;    
     chrome.runtime.sendMessage(
-        {action: 'setPossiblePassword', email: username, password: password});
+        {action: 'setPossiblePassword', username: username, password: password});
   }
 };
 
-// // TODO(adhintz) See if the old GAIA login page is used any where.
-// // If not, delete this function.
-// /**
-//  * Called when the GAIA page is submitted. Sends possible
-//  * password to background.js.
-//  * @param {!Event} evt Form submit event that triggered this. Not used.
-//  * @private
-//  */
-// passwordalert.saveGaiaPassword_ = function(evt) {
-//   const loginForm = document.getElementById('gaia_loginform');
-//   const email = loginForm.Email ?
-//       googString.trim(loginForm.Email.value.toLowerCase()) :
-//       '';
-//   const password = loginForm.Passwd ? loginForm.Passwd.value : '';
-//   if ((passwordalert.enterpriseMode_ &&
-// //       !passwordalert.isEmailInDomain_(email)) ||
-//       googString.isEmptyString(googString.makeSafe(password))) {
-//     return;  // Ignore generic @gmail.com logins or for other domains.
-//   }
-//   chrome.runtime.sendMessage(
-//       {action: 'setPossiblePassword', email: email, password: password});  
-// };
 
-
-// TODO change form elements, since we have a new field we have to change it in the request too
 /**
  * Called when the new GAIA page is unloaded. Sends possible
  * password to background.js.
@@ -749,60 +714,23 @@ passwordalert.saveSsoPassword_ = function(evt) {
 
   console.log('Running saveGaia2Password_')
 
-  // const usernameInput = document.getElementsByName('username');
-  // if (!usernameInput || usernameInput.length != 1) {
-  //   console.log('Username input not found');
-  //   return;
-  // }
-  // const email = usernameInput[0].value; // change then the field name here and in the request and fury app
-  // console.log('Email:', email);
-
-  const username = document.querySelector('input[name="username"]');
-  console.log('Username:', username.value);
-
-  // using the class
-  // const username = document.querySelector('.auth0-lock-input');
-  // console.log('Username:', username.value);
-  
+  const username = document.querySelector('input[name="username"]').value;
   const password = document.getElementById('1-password').value;
-  console.log('Password:', password);
+ 
+  if (!username || !password) {
+    console.log('SSO data is not filled in.');
+        return;
+  }
   
-  // if (!username || !password) {
-  //   console.log('Email or password not found -saveGaia2Password_');
-  //   return;
-  // }
   if ((passwordalert.enterpriseMode_ &&
        !passwordalert.isEmailInDomain_(email)) ||
       googString.isEmptyString(googString.makeSafe(password))) {
     return;  // Ignore generic @gmail.com logins or for other domains.
   }
   chrome.runtime.sendMessage(
-      {action: 'setPossiblePassword', email: username, password: password});
+      {action: 'setPossiblePassword', username: username, password: password});
   
 };
-// passwordalert.saveGaia2Password_ = function(evt) {
-//   const emailInput = document.getElementById('hiddenEmail');
-//   const email =
-//       emailInput ? googString.trim(emailInput.value.toLowerCase()) : '';
-//   const passwordInputs = document.getElementsByName('Passwd');
-//   if (!passwordInputs || passwordInputs.length != 1) {
-//     return;
-//   }
-//   const password = passwordInputs[0].value;
-//   if (!email || !password) {
-//     return;
-//   }
-//   if ((passwordalert.enterpriseMode_ &&
-//     //   !passwordalert.isEmailInDomain_(email)) ||
-//       googString.isEmptyString(googString.makeSafe(password))) {
-//     return;  // Ignore generic @gmail.com logins or for other domains.
-//   }
-//   chrome.runtime.sendMessage(
-//       {action: 'setPossiblePassword', email: email, password: password});
-  
-// };
-
-
 
 
 /**
@@ -870,18 +798,6 @@ passwordalert.validateSso_ = function() {
   }
   return true;
 };
-// passwordalert.validateSso_ = () => {
-//   const { sso_username_selector_, sso_password_selector_ } = passwordalert;
-//   const username = document.querySelector(sso_username_selector_);
-//   const password = document.querySelector(sso_password_selector_);
-  
-//   if ((username && !username.value) || (password && !password.value)) {
-//     console.log('%cSSO data is not filled in.', 'color: red;');
-//     return false;
-//   }
-  
-//   return true;
-// };
 
 
 /**
