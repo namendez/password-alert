@@ -1,5 +1,6 @@
 chrome/lib/
 chrome/build/
+chrome/.DS_Store
 .git/
 .pre-commit-config.yaml
 .DS_Store
