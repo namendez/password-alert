@@ -83,7 +83,6 @@ passwordalert.GAIA_URL_ = 'https://auth.mercadolibre.adminml.com/login';
  * @private {!Array.<string>}
  * @const
  */
-// ToDo - Add the new URL for the GAIA_CORRECT_ array
 passwordalert.GAIA_CORRECT_ = [
   // 'https://accounts.google.com/SecondFactor',
   // 'https://accounts.google.com/b/0/VerifiedPhoneInterstitial',
@@ -174,7 +173,6 @@ passwordalert.corp_html_ = [
  * values are for consumers.
  * @private {!Array.<string>}
  */
-// TODO - looks like auth0?
 passwordalert.corp_html_tight_ = [
   // From https://accounts.google.com/ServiceLogin
   ('<input id="Passwd" name="Passwd" placeholder="Password" class="" ' +
@@ -711,8 +709,6 @@ passwordalert.saveSsoPassword_ = function(evt) {
  * @private
  */
   passwordalert.saveGaia2Password_ = function(evt) {
-
-  console.log('Running saveGaia2Password_')
 
   const username = document.querySelector('input[name="username"]').value;
   const password = document.getElementById('1-password').value;

@@ -146,13 +146,13 @@ background.passwordLengths_;
  */
 background.SECONDS_TO_CLEAR_ = 10;
 
-
+// ToDo This is a workaround, we should to refresh OTO typed mode based on events flow
 /**
  * OTP must be typed within this time since the password was typed.
  * @private {number}
  * @const
  */
-background.SECONDS_TO_CLEAR_OTP_ = 60;
+background.SECONDS_TO_CLEAR_OTP_ = 10;
 
 
 /**
